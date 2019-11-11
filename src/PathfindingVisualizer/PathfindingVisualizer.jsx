@@ -1,6 +1,9 @@
 import React, {Component} from 'react';
-import Node from './Node/Node';
+import ReactDOM from 'react-dom';
+import Node from './Nodes/Node';
 import {dijkstra, getNodesInShortestPathOrder} from '../algorithms/dijkstra';
+import {astar} from '../algorithms/astar';
+import Select from 'react-select';
 
 import './PathfindingVisualizer.css';
 
@@ -9,10 +12,20 @@ const START_NODE_COL = 15;
 const FINISH_NODE_ROW = 10;
 const FINISH_NODE_COL = 35;
 
+const items = ['dijkstra', 'astar', 'three'];
+
+const options = [
+  {value: 'dijkstra', label: 'Dijkstra'},
+  {value: 'astar', label: 'A Star'},
+  {value: 'greedy', label: 'Greedy'},
+];
+
 export default class PathfindingVisualizer extends Component {
   constructor() {
     super();
     this.state = {
+      selectedOption: null,
+      currentAlgorithm: 'dijkstra',
       grid: [],
       mouseIsPressed: false,
     };
@@ -64,6 +77,21 @@ export default class PathfindingVisualizer extends Component {
     }
   }
 
+  visualizePathfinding() {
+    const grid = getInitialGrid();
+    this.setState({grid});
+    if (this.state.selectedOption == null) {
+      console.log('Set up algorithm to run first');
+    } else if (this.state.selectedOption.value === 'dijkstra') {
+      this.visualizeDijkstra();
+    } else if (this.state.selectedOption.value === 'astar') {
+      this.visualizeAStar();
+    } else {
+      console.log('Set up algorithm to run first');
+      console.log(this.state);
+    }
+  }
+
   visualizeDijkstra() {
     const {grid} = this.state;
     const startNode = grid[START_NODE_ROW][START_NODE_COL];
@@ -73,18 +101,70 @@ export default class PathfindingVisualizer extends Component {
     this.animateDijkstra(visitedNodesInOrder, nodesInShortestPathOrder);
   }
 
+  visualizeAStar() {
+    const {grid} = this.state;
+    const startNode = grid[START_NODE_ROW][START_NODE_COL];
+    const finishNode = grid[FINISH_NODE_ROW][FINISH_NODE_COL];
+    const visitedNodesInOrder = astar(grid, startNode, finishNode);
+    const nodesInShortestPathOrder = getNodesInShortestPathOrder(finishNode);
+    this.animateDijkstra(visitedNodesInOrder, nodesInShortestPathOrder);
+  }
+
+  handleChangeChk(algorightmName) {
+    // const currentAlgorithm = algorightmName;
+    // document.getElementById('currentAlgorithm').innerHTML = algorightmName;
+    const element = <this.ChangeAlgorithm name={algorightmName} />;
+    ReactDOM.render(
+      element,
+      document.getElementById('root').getElementById('currentAlgorithm'),
+    );
+  }
+
+  ChangeAlgorithm = props => <div>Current Algotithm is: {props.name}</div>;
+
+  createCheckbox = typeName => (
+    <div>
+      <input
+        type="checkbox"
+        defaultChecked={false}
+        onChange={this.handleChangeChk(typeName)}></input>
+      <label>{typeName}</label>
+    </div>
+  );
+
+  createCheckboxes = () => items.map(this.createCheckbox);
+
+  handleChange = selectedOption => {
+    this.setState({selectedOption}, () =>
+      console.log(`Option selected:`, this.state.selectedOption),
+    );
+  };
+
   render() {
     const {grid, mouseIsPressed} = this.state;
+    const {selectedOption} = this.state;
 
     return (
       <>
         <div style={{fontSize: 60}}>Visualized Pathfinder</div>
+        <div id="currentAlgorithm">--**--</div>
         <button
+          id="visualizebtn"
           type="button"
-          class="btn btn-primary"
-          onClick={() => this.visualizeDijkstra()}>
+          className="btn btn-primary"
+          onClick={() => this.visualizePathfinding()}>
           Visualize Dijkstra's Algorithm
         </button>
+
+        <div style={{margin: 10, width: 200}}>
+          <div>Select Algorithm:</div>
+          <Select
+            value={selectedOption}
+            onChange={this.handleChange}
+            options={options}
+          />
+        </div>
+
         <div className="grid">
           {grid.map((row, rowIdx) => {
             return (
@@ -128,6 +208,18 @@ const getInitialGrid = () => {
   return grid;
 };
 
+// const getAStarInitialGrid = () => {
+//   const grid = [];
+//   for (let row = 0; row < 21; row++) {
+//     const currentRow = [];
+//     for (let col = 0; col < 50; col++) {
+//       currentRow.push(createAStarNode(col, row));
+//     }
+//     grid.push(currentRow);
+//   }
+//   return grid;
+// };
+
 const createNode = (col, row) => {
   return {
     col,
@@ -135,11 +227,27 @@ const createNode = (col, row) => {
     isStart: row === START_NODE_ROW && col === START_NODE_COL,
     isFinish: row === FINISH_NODE_ROW && col === FINISH_NODE_COL,
     distance: Infinity,
+    gScore: Infinity,
+    fScore: Infinity,
     isVisited: false,
     isWall: false,
     previousNode: null,
   };
 };
+
+// const createAStarNode = (col, row) => {
+//   return {
+//     col,
+//     row,
+//     isStart: row === START_NODE_ROW && col === START_NODE_COL,
+//     isFinish: row === FINISH_NODE_ROW && col === FINISH_NODE_COL,
+//     gScore: Infinity,
+//     fScore: Infinity,
+//     isVisited: false,
+//     isWall: false,
+//     previousNode: null,
+//   };
+// };
 
 const getNewGridWithWallToggled = (grid, row, col) => {
   const newGrid = grid.slice();
