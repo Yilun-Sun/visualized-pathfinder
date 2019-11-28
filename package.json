@@ -1,6 +1,7 @@
 {
   "name": "my-app",
   "version": "0.1.0",
+  "homepage": "https://yilun-sun.github.io/visualized-pathfinder",
   "private": true,
   "dependencies": {
     "react": "^16.10.1",
@@ -31,7 +32,7 @@
       "last 1 safari version"
     ],
     "devDependencies": {
-      "gh-pages": "^2.0.1"
+      "gh-pages": "^2.1.1"
     }
   }
 }
